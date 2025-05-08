@@ -1,0 +1,301 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vellora - Learning Materials</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background-color: #f9f5f6;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* Block: Header */
+    .header {
+      background-color: #fff;
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .header-nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+    }
+    .header-nav .logo {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #ff6f61;
+    }
+    .header-nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+    }
+    .header-nav ul li a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 400;
+      transition: color 0.3s;
+    }
+    .header-nav ul li a:hover {
+      color: #ff6f61;
+    }
+
+    /* Block: Upload Section */
+    .upload-section {
+      padding: 4rem 2rem;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .upload-section h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .upload-form {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .upload-form input[type="file"] {
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+    .upload-form input[type="text"],
+    .upload-form textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 2rem;
+      background-color: #ff6f61;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #e65b50;
+      transform: translateY(-3px);
+    }
+
+    /* Block: Materials List */
+    .materials-section {
+      padding: 4rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .materials-section h2 {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .materials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+    .material-card {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    .material-card:hover {
+      transform: translateY(-10px);
+    }
+    .material-card i {
+      font-size: 2rem;
+      color: #ff6f61;
+      margin-bottom: 1rem;
+    }
+    .material-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .material-card p {
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .material-card .btn {
+      font-size: 0.9rem;
+      padding: 0.5rem 1.5rem;
+    }
+
+    /* Block: Footer */
+    .footer {
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Block: Header -->
+  <header class="header">
+    <nav class="header-nav">
+      <div class="logo">Vellora</div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#materials">Materials</a></li>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Block: Upload Section -->
+  <section id="upload" class="upload-section">
+    <h2>Upload Materials</h2>
+    <form class="upload-form" onsubmit="handleUpload(event)">
+      <input type="text" placeholder="Material Title" required>
+      <textarea placeholder="Material Description" rows="4" required></textarea>
+      <input type="file" accept=".pdf,.doc,.docx,.mp4,.jpg,.png" required>
+      <button type="submit" class="btn">Upload</button>
+    </form>
+  </section>
+
+  <!-- Block: Materials List -->
+  <section id="materials" class="materials-section">
+    <h2>Available Materials</h2>
+    <div class="materials-grid" id="materials-grid">
+      <!-- Mock data populated by JavaScript -->
+    </div>
+  </section>
+
+  <!-- Block: Footer -->
+  <footer class="footer">
+    <p>© 2025 Vellora. All rights reserved.</p>
+  </footer>
+
+  <!-- Block: JavaScript -->
+  <script>
+    // Mock materials data (replace with backend data in production)
+    const materials = [
+      {
+        title: "Introduction to Algebra",
+        description: "A beginner-friendly PDF guide to algebraic concepts.",
+        type: "pdf",
+        url: "#"
+      },
+      {
+        title: "Physics Video Tutorial",
+        description: "A 30-minute video on mechanics.",
+        type: "video",
+        url: "#"
+      },
+      {
+        title: "Chemistry Notes",
+        description: "Detailed notes on organic chemistry.",
+        type: "pdf",
+        url: "#"
+      }
+    ];
+
+    // Function to display materials (independent block)
+    function displayMaterials() {
+      const grid = document.getElementById('materials-grid');
+      grid.innerHTML = '';
+      materials.forEach(material => {
+        const card = document.createElement('div');
+        card.className = 'material-card';
+        card.innerHTML = `
+          <i class="fas fa-${material.type === 'pdf' ? 'file-pdf' : 'video'}"></i>
+          <h3>${material.title}</h3>
+          <p>${material.description}</p>
+          <a href="${material.url}" class="btn">Download</a>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Function to handle upload (mock, independent block)
+    function handleUpload(event) {
+      event.preventDefault();
+      const title = event.target[0].value;
+      const description = event.target[1].value;
+      const file = event.target[2].files[0];
+      // Mock adding new material
+      materials.push({
+        title,
+        description,
+        type: file.name.endsWith('.pdf') ? 'pdf' : 'video',
+        url: '#'
+      });
+      displayMaterials();
+      event.target.reset();
+      alert('Material uploaded successfully! (Mock action)');
+    }
+
+    // Initialize materials on page load
+    window.onload = displayMaterials;
+  </script>
+</body>
+</html>
