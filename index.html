@@ -1,0 +1,178 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutoring Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav {
+      background-color: #444;
+      padding: 1rem;
+    }
+    nav a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    .section {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 2rem auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .dashboard {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Homepage -->
+  <header>
+    <h1>Welcome to the Tutoring Platform</h1>
+    <p>Connecting students with expert tutors for personalized learning.</p>
+  </header>
+
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#tutors">Tutors</a>
+    <a href="#students">Students</a>
+    <a href="#dashboard">Dashboard</a>
+  </nav>
+
+  <!-- Homepage Section -->
+  <div id="home" class="section">
+    <h2>About Us</h2>
+    <p>Our platform offers flexible scheduling, secure payments, and interactive tools to enhance your learning experience.</p>
+    <h3>Testimonials</h3>
+    <p>"This platform helped me improve my grades!" - Student A</p>
+    <p>"Great way to connect with students." - Tutor B</p>
+  </div>
+
+  <!-- Tutor Section -->
+  <div id="tutors" class="section">
+    <h2>For Tutors</h2>
+    <p>Sign up to offer your expertise.</p>
+    <button onclick="showTutorSignup()">Sign Up</button>
+    <div id="tutor-signup" style="display: none;">
+      <h3>Create Your Profile</h3>
+      <p>Enter your qualifications, expertise, and availability.</p>
+      <button onclick="alert('Profile saved!')">Save Profile</button>
+    </div>
+  </div>
+
+  <!-- Student Section -->
+  <div id="students" class="section">
+    <h2>For Students</h2>
+    <p>Browse tutors and book sessions.</p>
+    <button onclick="showStudentSignup()">Sign Up</button>
+    <div id="student-signup" style="display: none;">
+      <h3>Find a Tutor</h3>
+      <p>Search by subject and book a session.</p>
+      <button onclick="alert('Session booked!')">Book Now</button>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboard" class="section dashboard">
+    <h2>Your Dashboard</h2>
+    <div id="tutor-dashboard" style="display: none;">
+      <h3>Tutor Dashboard</h3>
+      <p>Manage bookings, view earnings, and communicate with students.</p>
+    </div>
+    <div id="student-dashboard" style="display: none;">
+      <h3>Student Dashboard</h3>
+      <p>View upcoming sessions and access resources.</p>
+    </div>
+  </div>
+
+  <script>
+    function showTutorSignup() {
+      document.getElementById('tutor-signup').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('tutor-dashboard').style.display = 'block';
+      document.getElementById('student-dashboard').style.display = 'none';
+    }
+
+    function showStudentSignup() {
+      document.getElementById('student-signup').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('student-dashboard').style.display = 'block';
+      document.getElementById('tutor-dashboard').style.display = 'none';
+    }
+
+    // Placeholder for scheduling system
+    function bookSession() {
+      alert('Booking system coming soon!');
+    }
+
+    // Placeholder for payment processing
+    function processPayment() {
+      alert('Secure payment processing coming soon!');
+    }
+  </script>
+</body>
+</html>
